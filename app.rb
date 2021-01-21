@@ -17,11 +17,13 @@ get '/files/:digest' do
   if !isHex(params[:digest])
     #puts 'TEST1@@@@@@@@@@@@@@@@@@@@'
     status 422
+  elsif !file_hexs.include? params[:digest].downcase
+    status 404
   else
     status 200
     content_type = 'test?'
     puts 'here is the digest: ' + :digest.to_s 
-    body bodies[params[:digest]] #may need to fix the uppercase/lowercase
+    body bodies[params[:digest].downcase] #may need to fix the uppercase/lowercase
   end
 end
 
@@ -80,11 +82,15 @@ post '/' do
 end
 
 delete '/files/:digest' do
-if !isHex(params[:digest])
+  if !isHex(params[:digest])
     puts 'test2@@@@@@@@@@@@@@@@@@@@@'
     status 422
   else
+    puts 'here1'
+    file_hexs.delete(params[:digest].downcase)
+    puts 'here2'
     status 200
+    puts 'here3'
   end
 end
 
