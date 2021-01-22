@@ -2,8 +2,6 @@ require 'sinatra'
 require 'digest'
 require 'json'
 
-
-#file_hexs = Array['78edC928b486B2618B6F94774eD1649FB5B2550e59fe825ADf5a02080345fbA5']
 file_hexs = Array[]
 
 bodies = {}
@@ -15,17 +13,17 @@ end
 
 get '/files/:digest' do
   if !isHex(params[:digest])
-    #puts 'TEST1@@@@@@@@@@@@@@@@@@@@'
     status 422
   elsif !file_hexs.include? params[:digest].downcase
     status 404
   else
-    status 200
-    content_type = 'test?'
+    content_type bodies[params[:digest].downcase][0]
     puts 'here is the digest: ' + :digest.to_s 
-    body bodies[params[:digest].downcase] #may need to fix the uppercase/lowercase
+    body bodies[params[:digest].downcase][1]
+    status 200
   end
 end
+
 
 get '/files/' do
   ret = file_hexs.sort
@@ -34,14 +32,15 @@ get '/files/' do
 end
 
 
-
 post '/files/' do
   if params[:file]
     text = ''
-    x = 3.0
+    x = 2.0
+    type = ''
     begin
   	  filename = params[:file][:filename]
   	  tempfile = params[:file][:tempfile]
+  	  type = params[:file][:type]
   	  target = "public/files/#{filename}"
   	  File.open(tempfile.path, 'r') do |file|
    	    x = file.size() / 1048576.0
@@ -58,10 +57,10 @@ post '/files/' do
   	  else
   	    bod = Digest::SHA256.hexdigest text
   	    if file_hexs.include? bod
-  	      status 409 #change back to 409
+  	      status 409 
   	    else
   	      file_hexs.append(bod)
-  	      bodies[bod] = text
+  	      bodies[bod] = Array[type ,text] 
   	      bod = {"uploaded" => bod}
 	      body bod.to_json
 	      status 201
@@ -78,19 +77,15 @@ post '/' do
   require 'pp'
   PP.pp request
   "POST files\n"
-#  statusCode: 333
 end
+
 
 delete '/files/:digest' do
   if !isHex(params[:digest])
-    puts 'test2@@@@@@@@@@@@@@@@@@@@@'
     status 422
   else
-    puts 'here1'
     file_hexs.delete(params[:digest].downcase)
-    puts 'here2'
     status 200
-    puts 'here3'
   end
 end
 
@@ -102,7 +97,6 @@ def isHex(hex)
   elsif hex.length != 64
     return false
   end
-  
   for i in 0..hex.length()-1
     if !valid_chars.include? hex[i]
       return false
